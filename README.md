@@ -1,4 +1,4 @@
-Team Project 1 of System Software Analysis at Ivy Tech Community College. Members are: Mark Ciesiolka, William Clayton, Zachary Collins, Cody Gunter, Duncan Hegerman, and Abigail Huijon.
+Team Project 1 of System Software Analysis at Ivy Tech Community College. Members are: Mark Ciesiolka, Zachary Collins, Cody Gunter, Duncan Hegerman, and Abigail Huijon.
 
 To start the Django environment, you will need VS Code. Clone the repository to a directory of your choosing, then open the directory via "File" > "Open Folder".
 
