@@ -1,0 +1,53 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Tournament Manager{% endblock %}</title>
+</head>
+
+
+<body>
+    <div class="app"> 
+        <aside class="sidebar">
+            <div class="logo">
+
+            </div>
+            
+            <nav> 
+                <a href="{% url 'dashboard' %}">Dashboard</a>
+                <a href="#">Tournaments</a>
+                <a href="#">Players</a>
+                <a href="#">Bracket</a>
+                <a href="#">Results</a>
+                <a href="#">Standings</a>
+                <a href="#">Rule Templates</a>
+            </nav>
+
+            <div class="sidebar-bottom">
+                <a href="#">Logout</a>
+            </div>
+
+        </aside>
+
+        <main class="main">
+            <header class="topbar">
+                <h1>{% block heading%}Tournament Manager{% endblock %}</h1>
+
+                <div class="user">
+                    Organizer
+                </div>
+            </header>
+
+            <section class="content">
+                {% block content %}
+                {% endblock %}
+
+            </section>
+        </main>
+    </div>
+    
+</body>
+</html>
