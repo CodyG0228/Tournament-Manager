@@ -1,0 +1,62 @@
+{% extends "tournament/base.html" %}
+
+{% block title %}Create Tournament{% endblock %}
+
+{% block heading %}
+Create Tournament
+{% endblock %}
+
+{% block content %}
+
+<div class="card">
+
+    <form method="POST">
+
+        {% csrf_token %}
+
+        <label>Tournament Name</label>
+        <input type="text" name="name" placeholder="Friday Night Tournament">
+
+        <br><br>
+
+        <label>Game</label>
+
+        <select name="game">
+            <option>Magic: The Gathering</option>
+            <option>Pokémon</option>
+            <option>Super Smash Bros.</option>
+            <option>Mario Kart</option>
+            <option>Uno</option>
+        </select>
+
+        <br><br>
+
+        <label>Format</label>
+
+        <select name="format">
+            <option>Single Elimination</option>
+            <option>Double Elimination</option>
+            <option>Swiss</option>
+        </select>
+
+        <br><br>
+
+        <label>Number of Rounds</label>
+        <input type="number" name="rounds" min="1" value="4">
+
+        <br><br>
+
+        <label>Maximum Players</label>
+        <input type="number" name="max_players" min="2" value="32">
+
+        <br><br>
+
+        <button type="submit" class="btn btn-primary">
+            Create Tournament
+        </button>
+
+    </form>
+
+</div>
+
+{% endblock %}

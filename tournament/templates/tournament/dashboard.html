@@ -1,0 +1,59 @@
+{% extends "tournament/base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block heading %}
+Dashboard
+{% endblock %}
+
+{% block content %}
+
+<div style="margin-bottom: 25px;">
+    <a href="{% url 'tournament_setup'  %}" class="btn btn-primary">
+        + Create Tournament 
+    </a>
+</div>
+
+<div class="card-grid">
+
+    <div class="card">
+        <h3>Active Tournament</h3>
+        <div class="number">2</div>
+    </div>
+
+    <div class="card">
+        <h3>Total Players</h3>
+        <div class="number">32</div>
+    </div>
+
+    <div class="card">
+        <h3>Matches Today</h3>
+        <div class="number">16</div>
+    </div>
+
+    <div class="card">
+        <h3>Matches Today</h3>
+        <div class="number">16</div>
+    </div>
+
+</div>
+
+<div class="table-container">
+    <h2>My tournaments</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Tournament</th>
+                <th>Game</th>
+                <th>Players</th>
+                <th>Statue</th>
+                <th></th>
+            </tr>
+        </thead>
+
+    
+    </table>
+</div>
+
+{% endblock %}

@@ -1,5 +1,5 @@
 {% load static %}
-
+<link rel="stylesheet" href="{% static 'tournament/css/style.css' %}">
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,12 +18,8 @@
             
             <nav> 
                 <a href="{% url 'dashboard' %}">Dashboard</a>
-                <a href="#">Tournaments</a>
-                <a href="#">Players</a>
-                <a href="#">Bracket</a>
-                <a href="#">Results</a>
-                <a href="#">Standings</a>
-                <a href="#">Rule Templates</a>
+                <a href="{% url 'players' %}">Players</a>
+                <a href="{% url 'tournament_setup' %}">Create Tournament</a>
             </nav>
 
             <div class="sidebar-bottom">
