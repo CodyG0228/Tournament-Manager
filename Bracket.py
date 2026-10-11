@@ -318,3 +318,4 @@ if __name__ == "__main__":
             print(f"{m.match_id}: {players[0]} [AUTO-ADVANCED BYE]")
         else:
             print(f"{m.match_id}: {players[0]} vs {players[1]}")
+            
