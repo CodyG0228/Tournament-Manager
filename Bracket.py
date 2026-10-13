@@ -2,7 +2,8 @@ import random
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional
 
-from .models import Tournament, TournamentRegistration, TournamentBracket
+# Absolute import: this file lives at the repo root, so a relative ".models" import fails.
+from tournament.models import Tournament, TournamentRegistration, TournamentBracket
 
 # 1. PRESETS & CUSTOM GAME CONFIGURATION
 
@@ -148,7 +149,7 @@ class BracketPageManager:
         if not game_key and not custom_config:
             try:
                 tournament_obj = Tournament.objects.get(id=tournament_id)
-                game_key = tournament_obj.game
+                game_key = tournament_obj.game_type
             except Tournament.DoesNotExist:
                 pass
 
@@ -172,12 +173,13 @@ class BracketPageManager:
 
     def fetch_registered_players_from_system(self) -> List[Player]:
         """Pulls registered users directly from the Django database."""
+        # TournamentRegistration points at Player, so select_related must use "player"
         registrations = TournamentRegistration.objects.filter(
             tournament_id=self.tournament_id
-        ).select_related("user")
+        ).select_related("player")
 
         return [
-            Player(player_id=str(reg.user.id), username=reg.user.username)
+            Player(player_id=str(reg.player.player_id or reg.player.id), username=reg.player.username)
             for reg in registrations
         ]
 

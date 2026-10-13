@@ -1,0 +1,6 @@
+/* basic layout so base.html's {% static %} link resolves (it was erroring) */
+.app { display: flex; }
+.sidebar { width: 220px; }
+.main { flex: 1; }
+.card { border: 1px solid #ccc; padding: 16px; margin-bottom: 16px; }
+.btn-primary { padding: 8px 16px; }

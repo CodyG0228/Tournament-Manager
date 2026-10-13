@@ -1,12 +1,54 @@
-
 {% extends "tournament/base.html" %}
+{# player list + registration, the form POSTs to /players/ (handled in players view). #}
+
 {% block title %}Players{% endblock %}
-{% block heading %}Players{% endblock %}
+
+{% block heading %}
+Players
+{% endblock %}
+
 {% block content %}
 <div class="card">
-    <h2>Player Registration</h2>
-    <p>Register, check in, and manage tournament participants.</p>
-    <p>Player records will appear here.</p>
+    <h2>Player Management</h2>
+    <p>Manage player registration and view existing participant lists.</p>
+
+    <!-- registration form -->
+    {# "username" is the only field read, duplicates are skipped #}
+    <form method="POST" style="margin-bottom: 20px;">
+        {% csrf_token %}
+        <label>New Player Username:</label>
+        <input type="text" name="username" required>
+        <button type="submit">Register Player</button>
+    </form>
+
+    <h3>Registered Players ({{ players|length }})</h3>
+
+    {% if players %}
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>System ID</th>
+                <th>Wins</th>
+                <th>Losses</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for player in players %}
+            <tr>
+                <td>{{ player.username }}</td>
+                <td><code>{{ player.player_id }}</code></td>
+                <td>{{ player.wins }}</td>
+                <td>{{ player.losses }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No players have been registered yet.</p>
+    {% endif %}
+
 </div>
+
 {% endblock %}
   

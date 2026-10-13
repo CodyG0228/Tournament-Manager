@@ -1,0 +1,66 @@
+{% extends "tournament/base.html" %}
+{# detail page for one tournament that can be viewed from the dashboard. context from views.tournament_detail: tournament, registrations, matches, bracket. #}
+
+{% block title %}{{ tournament.name }}{% endblock %}
+
+{% block heading %}
+{{ tournament.name }}
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    {# main fields from the Tournament model #}
+    <p><strong>Game:</strong> {{ tournament.game_type|capfirst }}</p>
+    <p><strong>Date:</strong> {{ tournament.date }}</p>
+    <p><strong>Status:</strong> {{ tournament.status }}</p>
+    {% if bracket %}
+    {# this is saved by Bracket.py and shows which round the bracket has reached #}
+    <p><strong>Bracket round:</strong> {{ bracket.current_round }}</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>Registered Players ({{ registrations|length }})</h2>
+    {% if registrations %}
+    <ul>
+        {% for reg in registrations %}
+        <li>{{ reg.player.username }} <code>{{ reg.player.player_id }}</code></li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>No players registered yet.</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>Matches ({{ matches|length }})</h2>
+    {% if matches %}
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr>
+                <th>Match ID</th>
+                <th>Round</th>
+                <th>Players</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for match in matches %}
+            <tr>
+                <td><code>{{ match.match_id }}</code></td>
+                <td>{{ match.round_number }}</td>
+                <td>
+                    {% for part in match.participants.all %}
+                    {{ part.player.username }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No matches created yet.</p>
+    {% endif %}
+</div>
+
+<p><a href="{% url 'dashboard' %}">Back to Dashboard</a></p>
+{% endblock %}

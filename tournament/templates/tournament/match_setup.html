@@ -1,0 +1,26 @@
+{% extends "tournament/base.html" %}
+{# form to create a match, keys must match views.create_match: tournament_id, player_ids, round_num. #}
+
+{% block title %}Create Match{% endblock %}
+
+{% block heading %}
+Create Match
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <form method="POST">
+        {% csrf_token %}
+        <label>Tournament ID</label>
+        <input type="text" name="tournament_id" required>
+        <br><br>
+        <label>Player IDs (one per line)</label>
+        <textarea name="player_ids" rows="4" required></textarea>
+        <br><br>
+        <label>Round Number</label>
+        <input type="number" name="round_num" min="1" value="1" required>
+        <br><br>
+        <button type="submit" class="btn btn-primary">Create Match</button>
+    </form>
+</div>
+{% endblock %}
