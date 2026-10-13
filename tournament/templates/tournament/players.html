@@ -1,5 +1,5 @@
 {% extends "tournament/base.html" %}
-{# player list + registration, the form POSTs to /players/ (handled in players view). #}
+{# player list + registration, the form POSTs to /players/ (handled in players view) #}
 
 {% block title %}Players{% endblock %}
 
@@ -12,7 +12,7 @@ Players
     <h2>Player Management</h2>
     <p>Manage player registration and view existing participant lists.</p>
 
-    <!-- registration form -->
+    <!-- reg form -->
     {# "username" is the only field read, duplicates are skipped #}
     <form method="POST" style="margin-bottom: 20px;">
         {% csrf_token %}
