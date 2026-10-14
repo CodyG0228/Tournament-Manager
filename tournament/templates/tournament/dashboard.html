@@ -9,31 +9,31 @@ Dashboard
 {% block content %}
 
 <div style="margin-bottom: 25px;">
-    <a href="{% url 'tournament_setup'  %}" class="btn btn-primary">
-        + Create Tournament 
+    <a href="{% url 'tournament_setup' %}" class="btn btn-primary">
+        + Create Tournament
     </a>
 </div>
 
 <div class="card-grid">
 
     <div class="card">
-        <h3>Active Tournament</h3>
-        <div class="number">{{ tournaments|length }}</div>
+        <h3>Active Tournaments</h3>
+        <div class="number">{{ tournament_count }}</div>
     </div>
 
     <div class="card">
         <h3>Total Players</h3>
-        <div class="number">N/A</div> 
+        <div class="number">{{ player_count }}</div>
     </div>
 
     <div class="card">
-        <h3>Matches Today</h3>
-        <div class="number">0</div>
+        <h3>Total Matches</h3>
+        <div class="number">{{ match_count }}</div>
     </div>
 
     <div class="card">
         <h3>Upcoming Events</h3>
-        <div class="number">{{ tournaments|length }}</div>
+        <div class="number">{{ tournament_count }}</div>
     </div>
 
 </div>
@@ -46,6 +46,8 @@ Dashboard
             <tr>
                 <th>Tournament Name</th>
                 <th>Game Type</th>
+                <th>Format</th>
+                <th>Players</th>
                 <th>Status</th>
                 <th>Actions</th>
             </tr>
@@ -55,13 +57,24 @@ Dashboard
             <tr>
                 <td>{{ tournament.name }}</td>
                 <td>{{ tournament.game_type|capfirst }}</td>
+                <td>{{ tournament.get_format_display }}</td>
+                <td>{{ tournament.entrant_count }} / {{ tournament.max_players }}</td>
                 <td>{{ tournament.status }}</td>
-                {# Detail route needs the pk; "#" was a dead placeholder. #}
-                <td><a href="{% url 'tournament_detail' tournament.id %}">View Details</a></td>
+                <td>
+                    <a href="{% url 'tournament_detail' tournament.id %}">View Details</a>
+
+                    <form method="post"
+                          action="{% url 'delete_tournament' tournament.id %}"
+                          style="display: inline; margin-left: 12px;"
+                          onsubmit="return confirm('Delete {{ tournament.name|escapejs }}? This also removes its registrations and matches.');">
+                        {% csrf_token %}
+                        <button type="submit" style="background: #dc2626; padding: 5px 12px; font-size: 0.9rem;">Delete</button>
+                    </form>
+                </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="4">No tournaments are currently set up.</td>
+                <td colspan="6">No tournaments are currently set up.</td>
             </tr>
             {% endfor %}
         </tbody>
