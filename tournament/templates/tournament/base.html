@@ -1,22 +1,21 @@
 {% load static %}
-<link rel="stylesheet" href="{% static 'tournament/css/style.css' %}">
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Tournament Manager{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'tournament/css/style.css' %}">
 </head>
 
-
 <body>
-    <div class="app"> 
+    <div class="app">
         <aside class="sidebar">
             <div class="logo">
 
             </div>
-            
-            <nav> 
+
+            <nav>
                 <a href="{% url 'dashboard' %}">Dashboard</a>
                 <a href="{% url 'players' %}">Players</a>
                 <a href="{% url 'tournament_setup' %}">Create Tournament</a>
@@ -44,6 +43,6 @@
             </section>
         </main>
     </div>
-    
+
 </body>
 </html>

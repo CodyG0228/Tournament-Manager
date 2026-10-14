@@ -5,11 +5,21 @@ from django.utils import timezone
 #single event (i.e. "Friday Night Mario Kart").
 #game_type stores a preset key from Bracket.py GAME_PRESETS (e.g. 'mario_kart').
 class Tournament(models.Model):
+    FORMAT_CHOICES = [
+        ('single_elimination', 'Single Elimination'),
+        ('double_elimination', 'Double Elimination'),
+        ('swiss', 'Swiss'),
+        ('free_for_all', 'Free-for-All'),
+    ]
+
     name = models.CharField(max_length=200)
     game_type = models.CharField(max_length=100, default='unknown', help_text="e.g., 'pokemon_tcg', 'mario_kart'")
     date = models.DateField()
     status = models.CharField(max_length=50, default='SETUP')
-    
+    format = models.CharField(max_length=50, choices=FORMAT_CHOICES, default='single_elimination')
+    num_rounds = models.PositiveIntegerField(default=3)
+    max_players = models.PositiveIntegerField(default=16)
+
     def __str__(self):
         return self.name
 
@@ -29,6 +39,7 @@ class TournamentRegistration(models.Model):
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
     registered_date = models.DateTimeField(default=timezone.now)
     is_active = models.BooleanField(default=True)
+    checked_in = models.BooleanField(default=False) #only checked-in players go into matches
 
     class Meta:
         unique_together = ('tournament', 'player') #preventing double registration

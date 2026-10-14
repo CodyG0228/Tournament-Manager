@@ -1,5 +1,5 @@
 {% extends "tournament/base.html" %}
-{# form to create a match, keys must match views.create_match: tournament_id, player_ids, round_num. #}
+{# form keys must match views.create_match: tournament_id, player_ids, round_num #}
 
 {% block title %}Create Match{% endblock %}
 
@@ -8,19 +8,45 @@ Create Match
 {% endblock %}
 
 {% block content %}
+
+{% if tournament %}
 <div class="card">
+    <h2>{{ tournament.name }}</h2>
+
+    {% if registrations %}
     <form method="POST">
         {% csrf_token %}
-        <label>Tournament ID</label>
-        <input type="text" name="tournament_id" required>
-        <br><br>
-        <label>Player IDs (one per line)</label>
-        <textarea name="player_ids" rows="4" required></textarea>
-        <br><br>
+        <input type="hidden" name="tournament_id" value="{{ tournament.id }}">
+
+        <p><strong>Select the players in this match (checked-in players only):</strong></p>
+        <div style="margin-bottom: 16px;">
+            {% for reg in registrations %}
+            <label style="display: block; padding: 4px 0;">
+                <input type="checkbox" name="player_ids" value="{{ reg.player.player_id }}">
+                {{ reg.player.username }}
+            </label>
+            {% endfor %}
+        </div>
+
         <label>Round Number</label>
         <input type="number" name="round_num" min="1" value="1" required>
+
         <br><br>
+
         <button type="submit" class="btn btn-primary">Create Match</button>
     </form>
+    {% else %}
+    <p>No players are checked in for this tournament yet. Register players and check them in on the tournament page first.</p>
+    {% endif %}
+
+    <p style="margin-top: 16px;"><a href="{% url 'tournament_detail' tournament.id %}">Back to Tournament</a></p>
 </div>
+
+{% else %}
+<div class="card">
+    <p>Open a tournament from the dashboard and click <strong>Create Match</strong> there.</p>
+    <p><a href="{% url 'dashboard' %}">Back to Dashboard</a></p>
+</div>
+{% endif %}
+
 {% endblock %}

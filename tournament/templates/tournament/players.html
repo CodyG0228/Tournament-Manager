@@ -31,6 +31,7 @@ Players
                 <th>System ID</th>
                 <th>Wins</th>
                 <th>Losses</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -40,6 +41,15 @@ Players
                 <td><code>{{ player.player_id }}</code></td>
                 <td>{{ player.wins }}</td>
                 <td>{{ player.losses }}</td>
+                <td>
+                    <form method="post"
+                          action="{% url 'delete_player' player.pk %}"
+                          style="display: inline;"
+                          onsubmit="return confirm('Delete {{ player.username|escapejs }}? This also removes them from any tournaments.');">
+                        {% csrf_token %}
+                        <button type="submit" style="background: #dc2626; padding: 5px 12px; font-size: 0.9rem;">Delete</button>
+                    </form>
+                </td>
             </tr>
             {% endfor %}
         </tbody>
@@ -51,4 +61,3 @@ Players
 </div>
 
 {% endblock %}
-  

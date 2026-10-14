@@ -1,5 +1,4 @@
 {% extends "tournament/base.html" %}
-{# detail page for one tournament that can be viewed from the dashboard. context from views.tournament_detail: tournament, registrations, matches, bracket. #}
 
 {% block title %}{{ tournament.name }}{% endblock %}
 
@@ -8,59 +7,175 @@
 {% endblock %}
 
 {% block content %}
+
 <div class="card">
-    {# main fields from the Tournament model #}
     <p><strong>Game:</strong> {{ tournament.game_type|capfirst }}</p>
+    <p><strong>Format:</strong> {{ tournament.get_format_display }}</p>
+    <p><strong>Rounds:</strong> {{ tournament.num_rounds }}</p>
+    <p><strong>Max players:</strong> {{ tournament.max_players }}</p>
     <p><strong>Date:</strong> {{ tournament.date }}</p>
     <p><strong>Status:</strong> {{ tournament.status }}</p>
-    {% if bracket %}
-    {# this is saved by Bracket.py and shows which round the bracket has reached #}
-    <p><strong>Bracket round:</strong> {{ bracket.current_round }}</p>
-    {% endif %}
 </div>
 
 <div class="card">
-    <h2>Registered Players ({{ registrations|length }})</h2>
+    <h2>Registered Players ({{ registration_count }} / {{ tournament.max_players }})</h2>
+    <p>Checked in: {{ checked_in_count }}</p>
+
     {% if registrations %}
-    <ul>
-        {% for reg in registrations %}
-        <li>{{ reg.player.username }} <code>{{ reg.player.player_id }}</code></li>
-        {% endfor %}
-    </ul>
-    {% else %}
-    <p>No players registered yet.</p>
-    {% endif %}
-</div>
-
-<div class="card">
-    <h2>Matches ({{ matches|length }})</h2>
-    {% if matches %}
-    <table style="width: 100%; border-collapse: collapse;">
+    <table>
         <thead>
             <tr>
-                <th>Match ID</th>
-                <th>Round</th>
-                <th>Players</th>
+                <th>Username</th>
+                <th>Status</th>
+                <th>Action</th>
             </tr>
         </thead>
         <tbody>
-            {% for match in matches %}
+            {% for reg in registrations %}
             <tr>
-                <td><code>{{ match.match_id }}</code></td>
-                <td>{{ match.round_number }}</td>
+                <td>{{ reg.player.username }}</td>
+                <td>{% if reg.checked_in %}Checked in{% else %}Not checked in{% endif %}</td>
                 <td>
-                    {% for part in match.participants.all %}
-                    {{ part.player.username }}{% if not forloop.last %}, {% endif %}
-                    {% endfor %}
+                    <form method="post" action="{% url 'toggle_check_in' reg.pk %}" style="display: inline;">
+                        {% csrf_token %}
+                        {% if reg.checked_in %}
+                        <button type="submit" style="background: #6b7280; padding: 5px 12px; font-size: 0.9rem;">Undo Check-In</button>
+                        {% else %}
+                        <button type="submit" style="padding: 5px 12px; font-size: 0.9rem;">Check In</button>
+                        {% endif %}
+                    </form>
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
     {% else %}
-    <p>No matches created yet.</p>
+    <p>No players registered yet.</p>
+    {% endif %}
+
+    {% if is_full %}
+    <p style="margin-top: 16px;">This tournament is full ({{ tournament.max_players }} players).</p>
+    {% elif available_players %}
+    <form method="post" action="{% url 'register_player' tournament.id %}" style="margin-top: 16px;">
+        {% csrf_token %}
+        <select name="player">
+            {% for p in available_players %}
+            <option value="{{ p.pk }}">{{ p.username }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Register Player</button>
+    </form>
+    {% else %}
+    <p style="margin-top: 16px;">All players are registered. Add new players on the Players page.</p>
     {% endif %}
 </div>
 
-<p><a href="{% url 'dashboard' %}">Back to Dashboard</a></p>
+<div class="card">
+    <h2>Matches ({{ matches|length }})</h2>
+
+    {% if bracket and current_round %}
+    <p><strong>Current round:</strong> {{ current_round }}</p>
+    {% endif %}
+
+    {% if tournament_finished %}
+    <p style="font-size: 1.2rem;"><strong>Tournament complete. Champion: {{ champion }}</strong></p>
+    {% endif %}
+
+    {% if can_generate %}
+    <form method="post" action="{% url 'generate_bracket' tournament.id %}" style="margin-bottom: 16px;">
+        {% csrf_token %}
+        <button type="submit">Generate Bracket</button>
+        <span style="color: #6b7280; margin-left: 8px;">Builds round 1 from the checked-in players.</span>
+    </form>
+    {% elif not matches %}
+    <p style="color: #6b7280;">Check in at least 2 players to generate a bracket.</p>
+    {% endif %}
+
+    {% if can_advance %}
+    <form method="post" action="{% url 'advance_round' tournament.id %}" style="margin-bottom: 16px;">
+        {% csrf_token %}
+        <button type="submit">Advance to Round {{ current_round|add:1 }}</button>
+        <span style="color: #6b7280; margin-left: 8px;">Every match in this round has been reported.</span>
+    </form>
+    {% endif %}
+
+    {% for match in matches %}
+    <div style="border-top: 1px solid #e2e6ef; padding: 16px 0;">
+        <p>
+            <strong>Round {{ match.round_number }}</strong>
+            &nbsp;<code>{{ match.match_id }}</code>
+            &nbsp;&middot;&nbsp;
+            {% if match.is_bye %}
+                Bye
+            {% elif match.reported %}
+                Reported. Winner: <strong>{{ match.winners }}</strong>
+            {% else %}
+                Waiting for result
+            {% endif %}
+        </p>
+
+        {% if match.is_bye %}
+            <p style="color: #6b7280;">Advances automatically: {{ match.winners }}</p>
+        {% elif bracket and match.round_number != current_round %}
+            {% for part in match.participants.all %}
+            <div style="padding: 2px 0;">{{ part.player.username }} &mdash; {{ part.score }}</div>
+            {% endfor %}
+        {% else %}
+        <form method="post" action="{% url 'record_result' match.pk %}">
+            {% csrf_token %}
+            {% for part in match.participants.all %}
+            <div style="display: flex; align-items: center; gap: 12px; padding: 4px 0;">
+                <span style="width: 160px;">{{ part.player.username }}</span>
+                <input type="number" name="score_{{ part.pk }}" value="{{ part.score }}" min="0" style="width: 90px;">
+            </div>
+            {% endfor %}
+            <button type="submit" style="margin-top: 8px;">
+                {% if match.reported %}Update Result{% else %}Confirm Result{% endif %}
+            </button>
+        </form>
+        {% endif %}
+    </div>
+    {% empty %}
+    <p>No matches created yet.</p>
+    {% endfor %}
+
+    {% if not bracket %}
+    <p style="margin-top: 16px;">
+        <a href="{% url 'create_match' %}?tournament={{ tournament.id }}" class="btn btn-primary">+ Create Match</a>
+    </p>
+    {% endif %}
+</div>
+
+{% if leaderboard %}
+<div class="card">
+    <h2>Standings</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Player</th>
+                <th>Wins</th>
+                <th>Losses</th>
+                <th>Points</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in leaderboard %}
+            <tr>
+                <td>{{ row.rank }}</td>
+                <td>{{ row.username }}</td>
+                <td>{{ row.wins }}</td>
+                <td>{{ row.losses }}</td>
+                <td>{{ row.points_scored }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<p>
+    <a href="{% url 'dashboard' %}">Back to Dashboard</a>
+</p>
+
 {% endblock %}
