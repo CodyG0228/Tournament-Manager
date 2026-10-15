@@ -3,6 +3,10 @@ import uuid
 from django.db import transaction
 from django.db.models import Count, Max, ProtectedError
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import login
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.decorators import login_required
+from .models import Player
 
 # the bracket engine lives at the project root (Bracket.py).
 # its Match/Player are renamed so they don't clash with the Django models.
@@ -131,6 +135,38 @@ def _to_int(value, default, minimum=1):
 
 # ---------- views ----------
 
+def signup(request):
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+
+        if form.is_valid():
+            username = form.cleaned_data["username"]
+
+            if Player.objects.filter(username=username).exists():
+                form.add_error(
+                    "username",
+                    "This username already belongs to a player"
+                )
+            else:
+                user = form.save()
+
+                Player.objects.create(
+                    user=user,
+                    username=user.username,
+                    player_id=str(uuid.uuid4()),
+                )
+
+                login(request,user)
+                return redirect("dashboard")
+    else: 
+        form = UserCreationForm()
+
+    return render(
+        request,
+        "registration/signup.html",
+        {"form":form}
+    )
+
 def dashboard(request):
     active_tournaments = Tournament.objects.filter(
         status='SETUP'
@@ -157,29 +193,15 @@ def dashboard(request):
         context
     )
 
-
+@login_required
 def players(request):
-    if request.method == 'POST':
-        username = (request.POST.get('username') or '').strip()
+    all_players = Player.objects.all().order_by("username")
 
-        if username and not Player.objects.filter(username=username).exists():
-            try:
-                Player.objects.create(
-                    username=username,
-                    player_id=str(uuid.uuid4())
-                )
-            except Exception as e:
-                print(f"Error registering player: {e}")
-
-        return redirect('players')
-
-    all_players = Player.objects.all().order_by('username')
-
-    context = {
-        'players': all_players
-    }
-
-    return render(request, "tournament/players.html", context)
+    return render(
+        request,
+        "tournament/players.html",
+        {"players": all_players},
+    )
 
 
 def tournament_setup(request):
@@ -373,6 +395,16 @@ def tournament_detail(request, pk):
         tournamentregistration__tournament=tournament
     ).order_by("username")
 
+    current_player = (
+        Player.objects.filter(user=request.user).first()
+        if request.user.is_authenticated 
+        else None
+    )
+    is_registered = (
+        current_player is not None
+        and registrations.filter(player=current_player).exists()
+    )
+
     context = {
         "tournament": tournament,
         "registrations": registrations,
@@ -388,6 +420,8 @@ def tournament_detail(request, pk):
         "leaderboard": leaderboard,
         "bracket": bracket,
         "available_players": available_players,
+        "current_player": current_player,
+        "is_registered": is_registered,
     }
 
     return render(
@@ -396,37 +430,58 @@ def tournament_detail(request, pk):
         context
     )
 
-
+@login_required
 def register_player(request, pk):
+
+    if request.method !="POST":
+        return redirect("tournament_detail", pk=pk)
     # POST only: attaches a player to a tournament.
     # get_or_create respects the unique (tournament, player) pair.
     tournament = get_object_or_404(Tournament, pk=pk)
 
-    if request.method == 'POST':
+    #find the player profile that belongs to the logged-in account
+    player, created = Player.objects.get_or_create(
+        user=request.user,
+        defaults={
+            "username": request.user.username,
+            "player_id": str(uuid.uuid4()),
+        },
+    )
+
+    #no registration after the bracket starts 
+    if tournament.matches.exists():
+        return redirect("tournament_detail", pk=pk)
+
+    
+
         # stop adding once the tournament is at its player limit
-        if tournament.registrations.count() >= tournament.max_players:
-            return redirect('tournament_detail', pk=pk)
+    if tournament.registrations.count() >= tournament.max_players:
+        return redirect('tournament_detail', pk=pk)
 
-        player_pk = request.POST.get('player')
-
-        if player_pk:
-            player = get_object_or_404(Player, pk=player_pk)
-
-            TournamentRegistration.objects.get_or_create(
-                tournament=tournament,
-                player=player
-            )
+    #register this accounts own playe profile
+    TournamentRegistration.objects.get_or_create(
+        tournament=tournament,
+        player=player,
+        defaults={"is_active": True}
+    )
 
     return redirect('tournament_detail', pk=pk)
 
-
+@login_required
 def toggle_check_in(request, pk):
     # POST only: flips a registration between checked in and not checked in
     registration = get_object_or_404(TournamentRegistration, pk=pk)
 
-    if request.method == 'POST':
-        registration.checked_in = not registration.checked_in
-        registration.save()
+    #only allow POST request
+    if request.method != 'POST':
+        return redirect('tournament_detail', pk=registration.tournament_id)
+
+    #players can only check themselves in or undo their own check-in
+    if registration.player.user_id != request.user.id:
+        return redirect('tournament_detail', pk=registration.tournament_id)
+    
+    registration.checked_in = not registration.checked_in
+    registration.save()
 
     return redirect('tournament_detail', pk=registration.tournament_id)
 

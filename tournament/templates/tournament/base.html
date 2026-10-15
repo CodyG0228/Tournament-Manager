@@ -11,9 +11,7 @@
 <body>
     <div class="app">
         <aside class="sidebar">
-            <div class="logo">
-
-            </div>
+        
 
             <nav>
                 <a href="{% url 'dashboard' %}">Dashboard</a>
@@ -22,7 +20,16 @@
             </nav>
 
             <div class="sidebar-bottom">
-                <a href="#">Logout</a>
+                {% if user.is_authenticated %}
+                    <p>Logged in as <strong>{{ user.username }}</strong></p>
+                    <form method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <button type="submit">Log Out</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login' %}">Log In</a>
+                    <a href="{% url 'signup' %}">Sign Up</a>
+                {% endif %}
             </div>
 
         </aside>
