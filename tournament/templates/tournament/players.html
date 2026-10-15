@@ -1,5 +1,4 @@
 {% extends "tournament/base.html" %}
-{# player list + registration, the form POSTs to /players/ (handled in players view) #}
 
 {% block title %}Players{% endblock %}
 
@@ -7,24 +6,28 @@
 Players
 {% endblock %}
 
-{% block content %}
+{% block content %}  
 <div class="card">
     <h2>Player Management</h2>
-    <p>Manage player registration and view existing participant lists.</p>
+    <p>View your friends and their tournament records</p>
 
     <!-- reg form -->
-    {# "username" is the only field read, duplicates are skipped #}
-    <form method="POST" style="margin-bottom: 20px;">
-        {% csrf_token %}
-        <label>New Player Username:</label>
-        <input type="text" name="username" required>
-        <button type="submit">Register Player</button>
-    </form>
+    {% if user.is_authenticated %}
+        <p>
+            Logged in as <strong>{{ user.username }}</strong>
+        </p>
+    {% else %}
+        <p>
+            <a href="{% url 'login' %}">Log In</a> to join your friends
+        </p>
+    {% endif %}
 
-    <h3>Registered Players ({{ players|length }})</h3>
+    <h3>Players ({{ players|length}})</h3>
+
 
     {% if players %}
-    <table style="width: 100%; border-collapse: collapse;">
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse;">
         <thead>
             <tr>
                 <th>Username</th>
@@ -41,15 +44,6 @@ Players
                 <td><code>{{ player.player_id }}</code></td>
                 <td>{{ player.wins }}</td>
                 <td>{{ player.losses }}</td>
-                <td>
-                    <form method="post"
-                          action="{% url 'delete_player' player.pk %}"
-                          style="display: inline;"
-                          onsubmit="return confirm('Delete {{ player.username|escapejs }}? This also removes them from any tournaments.');">
-                        {% csrf_token %}
-                        <button type="submit" style="background: #dc2626; padding: 5px 12px; font-size: 0.9rem;">Delete</button>
-                    </form>
-                </td>
             </tr>
             {% endfor %}
         </tbody>
@@ -57,7 +51,6 @@ Players
     {% else %}
     <p>No players have been registered yet.</p>
     {% endif %}
-
 </div>
 
 {% endblock %}

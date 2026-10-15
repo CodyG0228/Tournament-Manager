@@ -36,14 +36,22 @@
                 <td>{{ reg.player.username }}</td>
                 <td>{% if reg.checked_in %}Checked in{% else %}Not checked in{% endif %}</td>
                 <td>
-                    <form method="post" action="{% url 'toggle_check_in' reg.pk %}" style="display: inline;">
-                        {% csrf_token %}
-                        {% if reg.checked_in %}
-                        <button type="submit" style="background: #6b7280; padding: 5px 12px; font-size: 0.9rem;">Undo Check-In</button>
+                    {% if user.is_authenticated and reg.player.user_id == user.id %}
+                        <form method="post" action="{% url 'toggle_check_in' reg.pk %}" style="display: inline;">
+                            {% csrf_token %}
+                            {% if reg.checked_in %}
+                                <button type="submit" style="background: #6b7280; padding: 5px 12px; font-size: 0.9rem;">
+                                    Undo Check-In
+                                </button>
+                            {% else %}
+                                <button type="submit" style="padding: 5px 12px; font-size: 0.9rem;">
+                                    Check-In
+                                </button>
+                            {% endif %}
+                        </form>
                         {% else %}
-                        <button type="submit" style="padding: 5px 12px; font-size: 0.9rem;">Check In</button>
+                        <span>-</span>
                         {% endif %}
-                    </form>
                 </td>
             </tr>
             {% endfor %}
@@ -54,19 +62,25 @@
     {% endif %}
 
     {% if is_full %}
-    <p style="margin-top: 16px;">This tournament is full ({{ tournament.max_players }} players).</p>
+        <p style="margin-top: 16px;">This tournament is full ({{ tournament.max_players }} players).</p>
     {% elif available_players %}
-    <form method="post" action="{% url 'register_player' tournament.id %}" style="margin-top: 16px;">
-        {% csrf_token %}
-        <select name="player">
-            {% for p in available_players %}
-            <option value="{{ p.pk }}">{{ p.username }}</option>
-            {% endfor %}
-        </select>
-        <button type="submit">Register Player</button>
-    </form>
+        {% if current_player %}
+            {% if is_registered %}
+                <p style="margin-top: 16px;">You are already registered for this tournament.</p>
+            {% else %}
+                <form method="post" action="{% url 'register_player' tournament.id %}" style="margin-top: 16px;">
+                    {% csrf_token %}
+                    <button type="submit">Join Tournament</button>
+                </form>
+            {% endif %}
+        {% else %}
+            <p style="margin-top: 16px;">Your account does not have a player profile. Please contact the site administrator.</p>
+        {% endif %}
     {% else %}
-    <p style="margin-top: 16px;">All players are registered. Add new players on the Players page.</p>
+        <p style="margin-top: 16px;">
+            <a href="{% url 'login' %}?next={{ request.path|urlencode }}">Log in</a>
+            to join this tournament.
+        </p>
     {% endif %}
 </div>
 
