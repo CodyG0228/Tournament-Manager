@@ -1,0 +1,64 @@
+{% extends "tournament/base.html" %}
+
+{% block title %}Players{% endblock %}
+
+{% block heading %}
+Players
+{% endblock %}
+
+{% block content %}  
+<!--player management information-->
+<div class="card">
+    <h2>Player Management</h2>
+    <p>View your friends and their tournament records</p>
+
+    <!-- reg form -->
+     <!--users login status-->
+    {% if user.is_authenticated %}
+        <p>
+            Logged in as <strong>{{ user.username }}</strong>
+        </p>
+        <!-- login link if not logged-in -->
+    {% else %}
+        <p>
+            <a href="{% url 'login' %}">Log In</a> to join your friends
+        </p>
+    {% endif %}
+
+    <!--number of players-->
+    <h3>Players ({{ players|length}})</h3>
+
+
+    <!--If players are available to display-->
+    {% if players %}
+    <div style="overflow-x: auto;">
+        <!--table information and tournament records -->
+        <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>System ID</th>
+                <th>Wins</th>
+                <th>Losses</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!--info for each player-->
+            {% for player in players %}
+            <tr>
+                <td>{{ player.username }}</td>
+                <td><code>{{ player.player_id }}</code></td>
+                <td>{{ player.wins }}</td>
+                <td>{{ player.losses }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <!--no players registered -->
+    {% else %}
+    <p>No players have been registered yet.</p>
+    {% endif %}
+</div>
+
+{% endblock %}

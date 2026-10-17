@@ -1,0 +1,85 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    /*  adjusts to different screen sizes */
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    /* title display */
+    <title>Log In | Tournament Manager</title>
+    #css style for login page
+    <style>
+        /* entire page and login card */
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3f4f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        /* white box containg login form */
+        .login-card {
+            background: white;
+            padding: 32px;
+            border-radius: 12px;
+            width: min(400px, 85%);
+            box-shadow: 0 4px 16px #00000015;
+        }
+        /* username and password inputs fill the card width */
+        input {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 10px;
+            margin: 6px 0 16px;
+        }
+        /* login button */
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #2563eb;
+            color: white;
+            border: 0;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        /* errors message in read */
+        .errors { color: #b91c1c; }
+    </style>
+</head>
+<body>
+    /* heading and description */
+    <main class="login-card">
+        <h1>Welcome back</h1>
+        <p>Log in to manage your matches.</p>
+
+        /* sends login info to Django */
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next }}">
+            {{ form.non_field_errors }}
+
+            <label for="{{ form.username.id_for_label }}">
+                Username
+            </label>
+            {{ form.username }}
+
+            <label for="{{ form.password.id_for_label }}">
+                Password
+            </label>
+            {{ form.password }}
+
+            {% if next %}
+                <input type="hidden" name="next" value="{{ next }}">
+            {% endif %}
+
+            <div class="errors">{{ form.errors }}</div>
+            <button type="submit">Log In</button>
+        </form>
+
+        /* signup link */
+        <p>New here? <a href="{% url 'signup' %}">Create an account</a></p>
+    </main>
+</body>
+</html>

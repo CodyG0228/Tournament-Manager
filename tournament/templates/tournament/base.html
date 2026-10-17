@@ -1,44 +1,51 @@
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Tournament Manager{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'tournament/css/style.css' %}">
 </head>
 
-
 <body>
-    <div class="app"> 
+    <div class="app">
         <aside class="sidebar">
-            <div class="logo">
+        
 
-            </div>
-            
-            <nav> 
+            /* sidebar containing navigation links and account options */
+            <nav>
                 <a href="{% url 'dashboard' %}">Dashboard</a>
-                <a href="#">Tournaments</a>
-                <a href="#">Players</a>
-                <a href="#">Bracket</a>
-                <a href="#">Results</a>
-                <a href="#">Standings</a>
-                <a href="#">Rule Templates</a>
+                <a href="{% url 'players' %}">Players</a>
+                <a href="{% url 'tournament_setup' %}">Create Tournament</a>
             </nav>
 
             <div class="sidebar-bottom">
-                <a href="#">Logout</a>
+                /* checks whether the current user is logged in */
+                {% if user.is_authenticated %}
+
+                /*displays the username of the logged-in user */
+                    <p>Logged in as <strong>{{ user.username }}</strong></p>
+
+                    /*post request to log the user out */
+                    <form method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <button type="submit">Log Out</button>
+                    </form>
+                /* displays signup and login links if logged out
+                {% else %}
+                    <a href="{% url 'login' %}">Log In</a>
+                    <a href="{% url 'signup' %}">Sign Up</a>
+                {% endif %}
             </div>
 
         </aside>
 
+        /*main page area */
         <main class="main">
             <header class="topbar">
                 <h1>{% block heading%}Tournament Manager{% endblock %}</h1>
 
-                <div class="user">
-                    Organizer
-                </div>
             </header>
 
             <section class="content">
@@ -48,6 +55,6 @@
             </section>
         </main>
     </div>
-    
+
 </body>
 </html>

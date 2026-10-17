@@ -1,0 +1,72 @@
+{% extends "tournament/base.html" %}
+{#tournament creation form, field names must match views.tournament_setup: name, game_type, date, format, num_rounds, max_players. #}
+
+{% block title %}Create Tournament{% endblock %}
+
+{% block heading %}
+Create Tournament
+{% endblock %}
+
+{% block content %}
+
+<div class="card">
+
+    <!--tournament creation form-->
+    <form method="POST">
+
+        {% csrf_token %}
+
+        <label>Tournament Name</label>
+        <input type="text" name="name" placeholder="Friday Night Tournament" required>
+
+        <br><br>
+
+        <label>Game</label>
+        {# values are GAME_PRESETS keys in Bracket.py, stored as Tournament.game_type #}
+        <select name="game_type">
+            <option value="magic_the_gathering">Magic: The Gathering</option>
+            <option value="pokemon_tcg">Pokémon</option>
+            <option value="mario_kart">Mario Kart</option>
+            <option value="mortal_kombat">Mortal Kombat</option>
+            <option value="street_fighter">Street Fighter</option>
+            <option value="yugioh">Yu-Gi-Oh!</option>
+            <option value="call_of_duty_ffa">Call of Duty Free-For-All</option>
+            <option value="naruto_storm">Naruto Ultimate Ninja Storm</option>
+        </select>
+
+        <br><br>
+
+        <label>Format</label>
+        <select name="format">
+            <option value="single_elimination">Single Elimination</option>
+            <option value="double_elimination">Double Elimination</option>
+            <option value="swiss">Swiss</option>
+            <option value="free_for_all">Free-for-All</option>
+        </select>
+
+        <br><br>
+
+        <label>Number of Rounds</label>
+        <input type="number" name="num_rounds" min="1" value="3" required>
+
+        <br><br>
+
+        <label>Maximum Players</label>
+        <input type="number" name="max_players" min="2" value="16" required>
+
+        <br><br>
+
+        <label>Date</label>
+        <input type="date" name="date" required>
+
+        <br><br>
+
+        <button type="submit" class="btn btn-primary">
+            Create Tournament
+        </button>
+
+    </form>
+
+</div>
+
+{% endblock %}

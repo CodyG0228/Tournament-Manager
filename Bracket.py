@@ -2,6 +2,9 @@ import random
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional
 
+# Absolute import: this file lives at the repo root, so a relative ".models" import fails.
+from tournament.models import Tournament, TournamentRegistration, TournamentBracket
+
 # 1. PRESETS & CUSTOM GAME CONFIGURATION
 
 GAME_PRESETS = {
@@ -25,9 +28,6 @@ GAME_PRESETS = {
 
 @dataclass
 class CustomGameConfig:
-    #!!!!!
-    #Pass custom rules entered by an admin on the frontend page into this class.
-    #!!!!!
     game_name: str
     heat_size: int          # How many players per match/heat (e.g., 2, 3, 4, 8)
     advance_per_heat: int   # How many players move on per match (e.g., 1, 2, 4)
@@ -48,11 +48,35 @@ class Player:
     player_id: str
     username: str
 
+
 @dataclass
 class MatchParticipant:
     player: Player
     score: int = 0
     rank: Optional[int] = None
+
+
+@dataclass
+class LeaderboardEntry:
+    rank: int
+    player_id: str
+    username: str
+    wins: int
+    losses: int
+    points_scored: int
+    stage_reached: str
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "rank": self.rank,
+            "player_id": self.player_id,
+            "username": self.username,
+            "wins": self.wins,
+            "losses": self.losses,
+            "points_scored": self.points_scored,
+            "stage_reached": self.stage_reached
+        }
+
 
 class Match:
     def __init__(self, match_id: str, round_num: int, max_players: int, advance_count: int, is_bye: bool = False):
@@ -88,7 +112,6 @@ class Match:
     def get_advancing_players(self) -> List[Player]:
         if not self.is_completed:
             return []
-        # Return all players in match up to the advance_count cutoff
         return [p.player for p in self.participants[:self.advance_count]]
 
     def to_dict(self) -> Dict[str, Any]:
@@ -115,12 +138,20 @@ class Match:
 class BracketPageManager:
     def __init__(
         self, 
-        tournament_id: str, 
+        tournament_id: int, 
         game_key: Optional[str] = None, 
         custom_config: Optional[CustomGameConfig] = None
     ):
         self.tournament_id = tournament_id
         self.rounds: Dict[int, List[Match]] = {}
+
+        # Look up game info from Tournament model if no explicit key is supplied
+        if not game_key and not custom_config:
+            try:
+                tournament_obj = Tournament.objects.get(id=tournament_id)
+                game_key = tournament_obj.game_type
+            except Tournament.DoesNotExist:
+                pass
 
         if custom_config:
             custom_config.validate()
@@ -141,14 +172,16 @@ class BracketPageManager:
             self.is_custom = True
 
     def fetch_registered_players_from_system(self) -> List[Player]:
-        #!!!!!
-        #Connect this function to your registration DB table.
-        #!!!!!
-        # Simulated registration pool (17 players to demonstrate the odd count & bye handling)
-        mock_registrations = [
-            {"id": f"usr_{i:02d}", "name": f"Player_{i}"} for i in range(1, 18)
+        """Pulls registered users directly from the Django database."""
+        # TournamentRegistration points at Player, so select_related must use "player"
+        registrations = TournamentRegistration.objects.filter(
+            tournament_id=self.tournament_id
+        ).select_related("player")
+
+        return [
+            Player(player_id=str(reg.player.player_id or reg.player.id), username=reg.player.username)
+            for reg in registrations
         ]
-        return [Player(player_id=p["id"], username=p["name"]) for p in mock_registrations]
 
     def generate_bracket(self) -> Dict[int, List[Match]]:
         """Pulls registered users, shuffles them, and builds Round 1 with automatic Byes."""
@@ -165,8 +198,6 @@ class BracketPageManager:
 
         for i in range(0, len(player_pool), self.heat_size):
             group = player_pool[i:i + self.heat_size]
-
-            # Detect if this group has fewer players than heat_size (e.g. 17th player)
             is_bye = len(group) < self.heat_size
 
             match = Match(
@@ -185,7 +216,6 @@ class BracketPageManager:
                 match.is_completed = True
                 for part in match.participants:
                     part.rank = 1  # Auto-advance
-                print(f"ℹ️ {group[0].username} received a Round 1 BYE (Auto-advancing to Round 2).")
 
             self.rounds[1].append(match)
             match_counter += 1
@@ -198,15 +228,10 @@ class BracketPageManager:
         current_matches = self.rounds.get(current_round_num, [])
 
         if not all(m.is_completed for m in current_matches):
-            print(f"Cannot advance: Round {current_round_num} has incomplete matches.")
             return None
 
         # CHECK IF TOURNAMENT JUST FINISHED
         if len(current_matches) == 1:
-            winning_match = current_matches[0]
-            champion = winning_match.participants[0].player.username
-            print(f"\n🏆 TOURNAMENT COMPLETED! 🏆")
-            print(f"Grand Champion: {champion}")
             self.save_bracket_state_to_db()
             return None
 
@@ -222,11 +247,9 @@ class BracketPageManager:
 
         # DYNAMIC FINALS ADAPTATION
         if total_advancers == 2:
-            print("\n⚡ Final 2 players reached! Adjusting Grand Finals to a 1v1 match.")
             next_heat_size = 2
             next_advance_count = 1
         elif total_advancers <= self.heat_size and self.heat_size > 2:
-            print(f"\n🏁 Final {total_advancers} players reached! Setting up Grand Finals heat.")
             next_heat_size = total_advancers
             next_advance_count = 1
 
@@ -253,7 +276,6 @@ class BracketPageManager:
                 match.is_completed = True
                 for part in match.participants:
                     part.rank = 1
-                print(f"ℹ️ {group[0].username} received a Round {next_round_num} BYE.")
 
             self.rounds[next_round_num].append(match)
             match_counter += 1
@@ -261,17 +283,108 @@ class BracketPageManager:
         self.save_bracket_state_to_db()
         return self.rounds[next_round_num]
 
+    def calculate_leaderboard(self) -> List[LeaderboardEntry]:
+        """Scans all rounds/matches and constructs overall tournament standings."""
+        stats: Dict[str, Dict[str, Any]] = {}
+
+        # 1. Initialize stats for all registered players
+        all_players = self.fetch_registered_players_from_system()
+        for p in all_players:
+            stats[p.player_id] = {
+                "username": p.username,
+                "wins": 0,
+                "losses": 0,
+                "points_scored": 0,
+                "highest_round": 1,
+                "highest_rank": 999
+            }
+
+        # 2. Iterate across all completed matches
+        total_rounds = max(self.rounds.keys()) if self.rounds else 1
+
+        for round_num, matches in self.rounds.items():
+            for m in matches:
+                if not m.is_completed:
+                    continue
+
+                advancing_ids = {p.player_id for p in m.get_advancing_players()}
+
+                for part in m.participants:
+                    p_id = part.player.player_id
+                    if p_id not in stats:
+                        stats[p_id] = {
+                            "username": part.player.username,
+                            "wins": 0,
+                            "losses": 0,
+                            "points_scored": 0,
+                            "highest_round": 1,
+                            "highest_rank": 999
+                        }
+
+                    stats[p_id]["points_scored"] += part.score
+                    stats[p_id]["highest_round"] = max(stats[p_id]["highest_round"], round_num)
+
+                    if part.rank is not None:
+                        stats[p_id]["highest_rank"] = min(stats[p_id]["highest_rank"], part.rank)
+
+                    # Mark win/loss based on advancement cutoff (ignore Byes for stats)
+                    if not m.is_bye:
+                        if p_id in advancing_ids:
+                            stats[p_id]["wins"] += 1
+                        else:
+                            stats[p_id]["losses"] += 1
+
+        # 3. Sort players (Highest Round -> Best Match Rank -> Total Points -> Wins)
+        sorted_players = sorted(
+            stats.items(),
+            key=lambda x: (
+                x[1]["highest_round"],
+                -x[1]["highest_rank"],
+                x[1]["points_scored"],
+                x[1]["wins"]
+            ),
+            reverse=True
+        )
+
+        # 4. Format into LeaderboardEntry list
+        leaderboard: List[LeaderboardEntry] = []
+        for rank, (p_id, data) in enumerate(sorted_players, start=1):
+            if data["highest_round"] == total_rounds and data["highest_rank"] == 1:
+                stage = "Champion 🏆"
+            elif data["highest_round"] == total_rounds:
+                stage = "Finalist"
+            else:
+                stage = f"Round {data['highest_round']}"
+
+            leaderboard.append(
+                LeaderboardEntry(
+                    rank=rank,
+                    player_id=p_id,
+                    username=data["username"],
+                    wins=data["wins"],
+                    losses=data["losses"],
+                    points_scored=data["points_scored"],
+                    stage_reached=stage
+                )
+            )
+
+        return leaderboard
+
     def save_bracket_state_to_db(self):
-        #!!!!!
-        #Write the bracket JSON to your database here.
-        #!!!!!
-        pass
+        """Persists the serialized bracket state + leaderboard into Django database JSONField."""
+        state_data = self.get_bracket_json()
+        current_round = max(self.rounds.keys()) if self.rounds else 1
+        
+        TournamentBracket.objects.update_or_create(
+            tournament_id=self.tournament_id,
+            defaults={
+                "current_round": current_round,
+                "bracket_data": state_data
+            }
+        )
 
     def get_bracket_json(self) -> Dict[str, Any]:
-        #!!!!!
-        #Return this JSON payload to your frontend view.
-        #!!!!!
-
+        """Return full bracket + leaderboard JSON payload for frontend views."""
         return {
             "tournament_id": self.tournament_id,
             "game_name": self.game_name,
@@ -279,42 +392,7 @@ class BracketPageManager:
             "rounds": {
                 round_num: [m.to_dict() for m in matches]
                 for round_num, matches in self.rounds.items()
-            }
+            },
+            "leaderboard": [entry.to_dict() for entry in self.calculate_leaderboard()]
         }
-
-
-
-# 4. DEMONSTRATION RUN (17-PLAYER 1v1 CARD / FIGHTING GAME TOURNAMENT)
-
-if __name__ == "__main__":
-    print("=== DEMO: 17 PLAYERS IN A 1v1 TOURNAMENT WITH AUTOMATIC BYE ===")
-    
-    # Initialize 17-player 1v1 tournament (Yu-Gi-Oh! / Pokémon TCG / Fighting Game)
-    tourney = BracketPageManager(tournament_id="card_17_demo", game_key="yugioh")
-    tourney.generate_bracket()
-
-    print(f"\n--- ROUND 1 ({len(tourney.rounds[1])} Matches Generated) ---")
-    for m in tourney.rounds[1]:
-        players = [p.player.username for p in m.participants]
-        if m.is_bye:
-            print(f"{m.match_id}: {players[0]} [AUTO-ADVANCED BYE]")
-        else:
-            print(f"{m.match_id}: {players[0]} vs {players[1]}")
-
-    # Record scores for the 8 playable matches (R1-M1 through R1-M8)
-    for i in range(8):
-        m = tourney.rounds[1][i]
-        p1_id = m.participants[0].player.player_id
-        p2_id = m.participants[1].player.player_id
-        m.record_scores({p1_id: 2, p2_id: 1})  # Player 1 wins each match
-
-    # Advance to Round 2 (8 winners from played matches + 1 Bye recipient = 9 players)
-    tourney.advance_to_next_round(1)
-
-    print(f"\n--- ROUND 2 ({len(tourney.rounds[2])} Matches Generated with 9 Advancers) ---")
-    for m in tourney.rounds[2]:
-        players = [p.player.username for p in m.participants]
-        if m.is_bye:
-            print(f"{m.match_id}: {players[0]} [AUTO-ADVANCED BYE]")
-        else:
-            print(f"{m.match_id}: {players[0]} vs {players[1]}")
+        

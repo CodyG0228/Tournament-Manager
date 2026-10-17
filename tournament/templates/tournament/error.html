@@ -1,0 +1,15 @@
+{% extends "tournament/base.html" %}
+{# very basic error page, views pass {"message": ...} (e.g. invalid match player IDs). #}
+
+{% block title %}Error{% endblock %}
+
+{% block heading %}
+Error
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <p>{{ message|default:"Something went wrong." }}</p></p>
+    <a href="{% url 'dashboard' %}">Back to Dashboard</a>
+</div>
+{% endblock %}

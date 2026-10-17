@@ -1,0 +1,149 @@
+:root {
+    --bg: #f4f6fb;
+    --sidebar: #1e2a4a;
+    --sidebar-hover: #2d3d6b;
+    --accent: #4f6df5;
+    --accent-dark: #3a54d4;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --border: #e2e6ef;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+}
+
+/* Layout */
+.app { display: flex; min-height: 100vh; }
+
+.sidebar {
+    width: 230px;
+    background: var(--sidebar);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    padding: 24px 16px;
+}
+
+.logo::before {
+    content: "Tournament Manager";
+    display: block;
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 28px;
+    padding: 0 12px;
+}
+
+.sidebar nav { display: flex; flex-direction: column; gap: 4px; }
+
+.sidebar a {
+    color: #cfd6ee;
+    text-decoration: none;
+    padding: 10px 12px;
+    border-radius: 6px;
+}
+
+.sidebar a:hover { background: var(--sidebar-hover); color: #fff; }
+
+.sidebar-bottom { margin-top: auto; }
+
+.main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+.topbar {
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    padding: 16px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.topbar h1 { margin: 0; font-size: 1.5rem; }
+
+.user {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    color: var(--muted);
+}
+
+.content { padding: 32px; max-width: 1100px; }
+
+/* Cards */
+.card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.card h2, .card h3 { margin-top: 0; }
+
+/* Tables */
+table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+
+th, td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+th {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+}
+
+tr:hover td { background: #f9fafe; }
+
+/* Forms and buttons */
+input[type="text"], input[type="date"], input[type="number"],
+input[type="password"], select, textarea {
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 1rem;
+    font-family: inherit;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: 2px solid var(--accent);
+    border-color: transparent;
+}
+
+button, .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 9px 18px;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+}
+
+button:hover, .btn-primary:hover { background: var(--accent-dark); }
+
+/* Links in the main area */
+.content a { color: var(--accent); }
+
+/* Keep button-style links white (must come after the rule above) */
+.content a.btn-primary,
+.content a.btn-primary:hover,
+.content a.btn-primary:visited,
+.content a[class*="btn"],
+.content a[class*="btn"]:hover,
+.content a[class*="btn"]:visited {
+    color: #fff;
+}
