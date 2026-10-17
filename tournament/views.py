@@ -23,7 +23,7 @@ from .models import (
 
 
 # ---------- bracket helpers ----------
-
+#custom bracker manager that includes only players who checked in
 class CheckedInBracketManager(BracketPageManager):
     # same engine as Bracket.py, but only checked-in players go into the bracket
     def fetch_registered_players_from_system(self):
@@ -40,7 +40,7 @@ class CheckedInBracketManager(BracketPageManager):
             for reg in registrations
         ]
 
-
+#save generated bracket matches and their players entries to othe database
 def _save_round_to_db(tournament, round_matches):
     # writes one round of Bracket.py matches into the Match / MatchParticipant tables.
     # match_id is unique across the whole database, so it is prefixed with the tournament.
@@ -134,7 +134,7 @@ def _to_int(value, default, minimum=1):
 
 
 # ---------- views ----------
-
+#create a login account and matching player profile for a new user
 def signup(request):
     if request.method == "POST":
         form = UserCreationForm(request.POST)
@@ -166,8 +166,9 @@ def signup(request):
         "registration/signup.html",
         {"form":form}
     )
-
+ #gather tournament information, player, and match counts for the main dashboard 
 def dashboard(request):
+    #shows up to 5 setup-stage tournament, newest first 
     active_tournaments = Tournament.objects.filter(
         status='SETUP'
     ).annotate(
@@ -194,6 +195,7 @@ def dashboard(request):
     )
 
 @login_required
+#display player profiles in alphabetical order
 def players(request):
     all_players = Player.objects.all().order_by("username")
 
@@ -203,7 +205,7 @@ def players(request):
         {"players": all_players},
     )
 
-
+#display the tournament form and create a tournament when it is submitted 
 def tournament_setup(request):
     if request.method == 'POST':
         try:
@@ -211,6 +213,7 @@ def tournament_setup(request):
             game_type = request.POST.get('game_type')
             date = request.POST.get('date')
 
+            #accepts only format vaules defined by the tournament model 
             valid_formats = [choice[0] for choice in Tournament.FORMAT_CHOICES]
             tournament_format = request.POST.get('format')
             if tournament_format not in valid_formats:
@@ -248,6 +251,7 @@ def tournament_setup(request):
     )
 
 
+#create a match from selected player or match setup form
 def create_match(request):
     if request.method == 'POST':
         try:
@@ -348,7 +352,7 @@ def create_match(request):
         context
     )
 
-
+#gather registration, match results, bracket progress, and standing for 1 tournament
 def tournament_detail(request, pk):
     tournament = get_object_or_404(Tournament, pk=pk)
 
@@ -431,6 +435,7 @@ def tournament_detail(request, pk):
     )
 
 @login_required
+#regiter the logged-in player for a tournament if registration is still allowed 
 def register_player(request, pk):
 
     if request.method !="POST":
@@ -468,6 +473,7 @@ def register_player(request, pk):
     return redirect('tournament_detail', pk=pk)
 
 @login_required
+#let a player check in or undo check in for their own registration
 def toggle_check_in(request, pk):
     # POST only: flips a registration between checked in and not checked in
     registration = get_object_or_404(TournamentRegistration, pk=pk)
@@ -485,7 +491,7 @@ def toggle_check_in(request, pk):
 
     return redirect('tournament_detail', pk=registration.tournament_id)
 
-
+#generate the 1st bracket round from checked-in players 
 def generate_bracket(request, pk):
     # POST only: builds round 1 (shuffled seeding plus byes) from the checked-in players
     tournament = get_object_or_404(Tournament, pk=pk)
@@ -507,7 +513,7 @@ def generate_bracket(request, pk):
 
     return redirect('tournament_detail', pk=pk)
 
-
+#advance the bracket after teh current round has been completed
 def advance_round(request, pk):
     # POST only: once every match in the round is reported, builds the next round
     tournament = get_object_or_404(Tournament, pk=pk)

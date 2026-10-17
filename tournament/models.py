@@ -5,6 +5,7 @@ from django.conf import settings
 #single event (i.e. "Friday Night Mario Kart").
 #game_type stores a preset key from Bracket.py GAME_PRESETS (e.g. 'mario_kart').
 class Tournament(models.Model):
+    #available choices
     FORMAT_CHOICES = [
         ('single_elimination', 'Single Elimination'),
         ('double_elimination', 'Double Elimination'),
@@ -23,6 +24,7 @@ class Tournament(models.Model):
     def __str__(self):
         return self.name
 
+#links a player profile to one django login account
 class Player(models.Model):
 
     #each player is linked to one django log in

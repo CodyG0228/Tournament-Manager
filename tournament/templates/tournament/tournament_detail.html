@@ -8,6 +8,7 @@
 
 {% block content %}
 
+<!--information about the tournament-->
 <div class="card">
     <p><strong>Game:</strong> {{ tournament.game_type|capfirst }}</p>
     <p><strong>Format:</strong> {{ tournament.get_format_display }}</p>
@@ -16,12 +17,14 @@
     <p><strong>Date:</strong> {{ tournament.date }}</p>
     <p><strong>Status:</strong> {{ tournament.status }}</p>
 </div>
-
+<!--registered players and eligiable players can checked in-->
 <div class="card">
     <h2>Registered Players ({{ registration_count }} / {{ tournament.max_players }})</h2>
     <p>Checked in: {{ checked_in_count }}</p>
 
+    <!--check any who are registered-->
     {% if registrations %}
+    <!--registered players and check in status -->
     <table>
         <thead>
             <tr>
@@ -31,14 +34,17 @@
             </tr>
         </thead>
         <tbody>
+            <!---looping through all tournament registrations and displays -->
             {% for reg in registrations %}
             <tr>
                 <td>{{ reg.player.username }}</td>
                 <td>{% if reg.checked_in %}Checked in{% else %}Not checked in{% endif %}</td>
                 <td>
+                    <!--request to change check-in status-->
                     {% if user.is_authenticated and reg.player.user_id == user.id %}
                         <form method="post" action="{% url 'toggle_check_in' reg.pk %}" style="display: inline;">
                             {% csrf_token %}
+                            <!--undo checkin or check in button-->
                             {% if reg.checked_in %}
                                 <button type="submit" style="background: #6b7280; padding: 5px 12px; font-size: 0.9rem;">
                                     Undo Check-In
@@ -49,6 +55,7 @@
                                 </button>
                             {% endif %}
                         </form>
+                        <!--dash when it is another user and not you-->
                         {% else %}
                         <span>-</span>
                         {% endif %}
@@ -57,33 +64,40 @@
             {% endfor %}
         </tbody>
     </table>
+    <!--no players are registered-->
     {% else %}
     <p>No players registered yet.</p>
     {% endif %}
 
+    <!--tournament has reached its player limit-->
     {% if is_full %}
         <p style="margin-top: 16px;">This tournament is full ({{ tournament.max_players }} players).</p>
     {% elif available_players %}
+    <!--checks if user has a player profile-->
         {% if current_player %}
+        <!--cannot register twice-->
             {% if is_registered %}
                 <p style="margin-top: 16px;">You are already registered for this tournament.</p>
             {% else %}
+            <!--form to join the tournament-->
                 <form method="post" action="{% url 'register_player' tournament.id %}" style="margin-top: 16px;">
                     {% csrf_token %}
                     <button type="submit">Join Tournament</button>
                 </form>
             {% endif %}
         {% else %}
+        <!--no player profile-->
             <p style="margin-top: 16px;">Your account does not have a player profile. Please contact the site administrator.</p>
         {% endif %}
     {% else %}
+    <!--can't register if not logged in-->
         <p style="margin-top: 16px;">
             <a href="{% url 'login' %}?next={{ request.path|urlencode }}">Log in</a>
             to join this tournament.
         </p>
     {% endif %}
 </div>
-
+<!--displasy matches, bracket control, and match results-->
 <div class="card">
     <h2>Matches ({{ matches|length }})</h2>
 
@@ -95,16 +109,19 @@
     <p style="font-size: 1.2rem;"><strong>Tournament complete. Champion: {{ champion }}</strong></p>
     {% endif %}
 
+    <!--if you can generate a round/bracket a button will display-->
     {% if can_generate %}
     <form method="post" action="{% url 'generate_bracket' tournament.id %}" style="margin-bottom: 16px;">
         {% csrf_token %}
         <button type="submit">Generate Bracket</button>
         <span style="color: #6b7280; margin-left: 8px;">Builds round 1 from the checked-in players.</span>
     </form>
+    <!--cannot generate bracket-->
     {% elif not matches %}
     <p style="color: #6b7280;">Check in at least 2 players to generate a bracket.</p>
     {% endif %}
 
+    <!--advance to next round-->
     {% if can_advance %}
     <form method="post" action="{% url 'advance_round' tournament.id %}" style="margin-bottom: 16px;">
         {% csrf_token %}
@@ -113,12 +130,14 @@
     </form>
     {% endif %}
 
+    <!--looping through every match in the tournament-->
     {% for match in matches %}
     <div style="border-top: 1px solid #e2e6ef; padding: 16px 0;">
         <p>
             <strong>Round {{ match.round_number }}</strong>
             &nbsp;<code>{{ match.match_id }}</code>
             &nbsp;&middot;&nbsp;
+            <!--match status-->
             {% if match.is_bye %}
                 Bye
             {% elif match.reported %}
@@ -134,11 +153,15 @@
             {% for part in match.participants.all %}
             <div style="padding: 2px 0;">{{ part.player.username }} &mdash; {{ part.score }}</div>
             {% endfor %}
+
+            <!--displays the form for entering or updatign match scores-->
         {% else %}
         <form method="post" action="{% url 'record_result' match.pk %}">
             {% csrf_token %}
+            <!--loops through participants-->
             {% for part in match.participants.all %}
             <div style="display: flex; align-items: center; gap: 12px; padding: 4px 0;">
+                
                 <span style="width: 160px;">{{ part.player.username }}</span>
                 <input type="number" name="score_{{ part.pk }}" value="{{ part.score }}" min="0" style="width: 90px;">
             </div>
@@ -153,6 +176,7 @@
     <p>No matches created yet.</p>
     {% endfor %}
 
+    <!--a manual match creation-->
     {% if not bracket %}
     <p style="margin-top: 16px;">
         <a href="{% url 'create_match' %}?tournament={{ tournament.id }}" class="btn btn-primary">+ Create Match</a>
@@ -160,6 +184,7 @@
     {% endif %}
 </div>
 
+<!--displays leaderboard standing-->
 {% if leaderboard %}
 <div class="card">
     <h2>Standings</h2>

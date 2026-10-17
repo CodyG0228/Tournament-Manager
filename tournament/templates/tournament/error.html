@@ -9,7 +9,7 @@ Error
 
 {% block content %}
 <div class="card">
-    <p>{{ message|default:"Something went wrong. Good luck finding it lol." }}</p></p>
+    <p>{{ message|default:"Something went wrong." }}</p></p>
     <a href="{% url 'dashboard' %}">Back to Dashboard</a>
 </div>
 {% endblock %}

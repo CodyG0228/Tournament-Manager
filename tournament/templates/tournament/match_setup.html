@@ -9,17 +9,23 @@ Create Match
 
 {% block content %}
 
+<!--checking tournament in django view-->
 {% if tournament %}
 <div class="card">
     <h2>{{ tournament.name }}</h2>
 
+    <!--are player registered and checked in-->
     {% if registrations %}
+
     <form method="POST">
         {% csrf_token %}
         <input type="hidden" name="tournament_id" value="{{ tournament.id }}">
 
+        <!--only checked in players can be in the match-->
         <p><strong>Select the players in this match (checked-in players only):</strong></p>
         <div style="margin-bottom: 16px;">
+
+            <!--loops through checked-in player registrations-->
             {% for reg in registrations %}
             <label style="display: block; padding: 4px 0;">
                 <input type="checkbox" name="player_ids" value="{{ reg.player.player_id }}">
@@ -28,6 +34,7 @@ Create Match
             {% endfor %}
         </div>
 
+        <!--display infor for round number-->
         <label>Round Number</label>
         <input type="number" name="round_num" min="1" value="1" required>
 
@@ -35,6 +42,7 @@ Create Match
 
         <button type="submit" class="btn btn-primary">Create Match</button>
     </form>
+    <!--no players are checked in-->
     {% else %}
     <p>No players are checked in for this tournament yet. Register players and check them in on the tournament page first.</p>
     {% endif %}
@@ -42,8 +50,10 @@ Create Match
     <p style="margin-top: 16px;"><a href="{% url 'tournament_detail' tournament.id %}">Back to Tournament</a></p>
 </div>
 
+<!--theres was no tournament -->
 {% else %}
 <div class="card">
+    <!--goes back to dashboard-->
     <p>Open a tournament from the dashboard and click <strong>Create Match</strong> there.</p>
     <p><a href="{% url 'dashboard' %}">Back to Dashboard</a></p>
 </div>
