@@ -1,11 +1,11 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
-
+# links and connections to pages 
 urlpatterns = [
-    #dashboard
+    # dashboard
     path("", views.dashboard, name="dashboard"),
-    #authentication\
+    # authentication
     path("signup/",views.signup, name="signup"),
     path("login/", 
          auth_views.LoginView.as_view(
@@ -18,7 +18,7 @@ urlpatterns = [
         auth_views.LogoutView.as_view(),
         name="logout",
     ),
-    #players
+    # players
     path("players/", views.players, name="players"),
 
     path("players/<int:pk>/delete/", views.delete_player, name="delete_player"),
@@ -31,12 +31,12 @@ urlpatterns = [
 
     path("tournaments/<int:pk>/delete/", views.delete_tournament, name="delete_tournament"),
 
-    #Brackets
+    # Brackets
     path("tournaments/<int:pk>/bracket/generate/", views.generate_bracket, name="generate_bracket"),
 
     path("tournaments/<int:pk>/bracket/advance/", views.advance_round, name="advance_round"),
 
-    #existing match routes
+    # existing match routes
     path("registrations/<int:pk>/check-in/", views.toggle_check_in, name="toggle_check_in"),
     path("matches/create/", views.create_match, name="create_match"),
     path("matches/<int:pk>/result/", views.record_result, name="record_result"),
