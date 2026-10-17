@@ -3,9 +3,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    /*  adjusts to different screen sizes */
+    <!--adjusts to differnt screen size-->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    /* title display */
+    <!--title display--> 
     <title>Log In | Tournament Manager</title>
     #css style for login page
     <style>
@@ -44,17 +44,17 @@
             border-radius: 6px;
             cursor: pointer;
         }
-        /* errors message in read */
+        /* errors message in red */
         .errors { color: #b91c1c; }
     </style>
 </head>
 <body>
-    /* heading and description */
+    <!--heading and description -->
     <main class="login-card">
         <h1>Welcome back</h1>
         <p>Log in to manage your matches.</p>
 
-        /* sends login info to Django */
+        <!-- sends login info to Django -->
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="next" value="{{ next }}">
@@ -78,7 +78,7 @@
             <button type="submit">Log In</button>
         </form>
 
-        /* signup link */
+        <!--signup link-->
         <p>New here? <a href="{% url 'signup' %}">Create an account</a></p>
     </main>
 </body>

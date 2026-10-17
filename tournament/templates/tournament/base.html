@@ -13,7 +13,7 @@
         <aside class="sidebar">
         
 
-            /* sidebar containing navigation links and account options */
+            <!--sidebar containing navigation links and account options-->
             <nav>
                 <a href="{% url 'dashboard' %}">Dashboard</a>
                 <a href="{% url 'players' %}">Players</a>
@@ -21,18 +21,18 @@
             </nav>
 
             <div class="sidebar-bottom">
-                /* checks whether the current user is logged in */
+                 <!--checks whether the current user is logged in-->
                 {% if user.is_authenticated %}
 
-                /*displays the username of the logged-in user */
+                <!--displays the username of the logged-in user-->
                     <p>Logged in as <strong>{{ user.username }}</strong></p>
 
-                    /*post request to log the user out */
+                    <!--post request to log the user out-->
                     <form method="post" action="{% url 'logout' %}">
                         {% csrf_token %}
                         <button type="submit">Log Out</button>
                     </form>
-                /* displays signup and login links if logged out
+                <!--displays signup and login links if logged out-->
                 {% else %}
                     <a href="{% url 'login' %}">Log In</a>
                     <a href="{% url 'signup' %}">Sign Up</a>
@@ -41,7 +41,7 @@
 
         </aside>
 
-        /*main page area */
+        <!--main page area-->
         <main class="main">
             <header class="topbar">
                 <h1>{% block heading%}Tournament Manager{% endblock %}</h1>

@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    /* title page */
+    <!--title page-->
     <title>Create Account | Tournament Manager</title>
-    /* css for signup page */
+    <!--css for signup page-->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -51,17 +51,17 @@
     </style>
 </head>
 <body>
-    /* main container for the signup form */
+    <!--main container for the signup form-->
     <main class="signup-card">
         <h1>Create your account</h1>
         <p>Join your friends and track your tournaments.</p>
 
-        /* new account infro sent to django */
+        <!--new account infro sent to django-->
         <form method="post">
             {% csrf_token %}
             {{ form.non_field_errors }}
 
-            /* loops through each field in the django form */
+            <!--loops through each field in the django form-->
             {% for field in form %}
                 <label for="{{ field.id_for_label }}">
                     {{ field.label }}
